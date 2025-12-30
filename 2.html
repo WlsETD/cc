@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Envelope Letter</title>
+
+  <style>
+    :root {
+      --color-env: #f0f0f0;
+      --color-env2: #e6e6e6;
+      --color-flap: #ffffff;
+      --color-bg: #000000;
+      --color-heart: #D00000;
+
+      --env-border-radius: 10px;
+      --env-width: 320px;
+      --env-height: 210px;
+      --heart-width: 46px;
+
+      /* Modal sizing (near full-screen) */
+      --modal-w: 94vw;
+      --modal-h: 82vh;
+      --modal-max-w: 720px;
+      --modal-max-h: 820px;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: url(https://wallpaperaccess.com/full/1326724.jpg);
+      background-position: center;
+      background-attachment: fixed;
+      background-size: cover;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Microsoft JhengHei", Arial, sans-serif;
+    }
+
+    .stage {
+      width: min(92vw, 560px);
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+      padding: 18px 0 12px;
+    }
+
+    #envelope {
+      position: relative;
+      width: var(--env-width);
+      height: var(--env-height);
+      border-bottom-left-radius: var(--env-border-radius);
+      border-bottom-right-radius: var(--env-border-radius);
+      background-color: var(--color-flap);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .25);
+      perspective: 900px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #envelope * { box-sizing: border-box; }
+
+    .front {
+      position: absolute;
+      width: 0;
+      height: 0;
+      z-index: 3;
+    }
+
+    .flap {
+      border-left: calc(var(--env-width)/2) solid transparent;
+      border-right: calc(var(--env-width)/2) solid transparent;
+      border-bottom: calc(var(--env-height)/2 - 10px) solid transparent;
+      border-top: calc(var(--env-height)/2 + 10px) solid var(--color-flap);
+      transform-origin: top;
+      pointer-events: none;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+    }
+
+    .pocket {
+      border-left: calc(var(--env-width)/2) solid var(--color-env);
+      border-right: calc(var(--env-width)/2) solid var(--color-env);
+      border-bottom: calc(var(--env-height)/2) solid var(--color-env2);
+      border-top: calc(var(--env-height)/2) solid transparent;
+      border-bottom-left-radius: var(--env-border-radius);
+      border-bottom-right-radius: var(--env-border-radius);
+    }
+
+    /* ===== Letter (in-envelope: only for sliding out) ===== */
+    .letter {
+      position: absolute;
+      left: 50%;
+      bottom: 8px;
+      width: 88%;
+      height: 86%;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .18);
+      overflow: hidden;
+      transform: translateX(-50%) translateY(0) scale(1);
+      z-index: 1;
+      will-change: transform;
+    }
+
+    .letter::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 20%,
+        rgba(225, 236, 248, .65) 55%,
+        rgba(225, 236, 248, 1) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* ===== Hearts ===== */
+    .hearts {
+      position: absolute;
+      top: calc(var(--env-height)/2);
+      left: 0;
+      right: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .heart {
+      position: absolute;
+      bottom: 0;
+      right: 10%;
+      pointer-events: none;
+
+      /* 讓「開啟前就有愛心」 */
+      opacity: .95;
+      animation: none; /* 預設不飄 */
+    }
+
+    .heart::before,
+    .heart::after {
+      position: absolute;
+      content: "";
+      left: var(--heart-width);
+      top: 0;
+      width: var(--heart-width);
+      height: calc(var(--heart-width)*1.6);
+      background: var(--color-heart);
+      border-radius: var(--heart-width) var(--heart-width) 0 0;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    .heart::after {
+      left: 0;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    /* 只保留位置與縮放（預設不播動畫） */
+    .a1 { left: 18%; transform: scale(0.65); }
+    .a2 { left: 56%; transform: scale(1); }
+    .a3 { left: 8%;  transform: scale(0.85); }
+
+    /* 只有在 open 狀態才啟動動畫 */
+    .open .a1{
+      animation: slideUp 4s linear 1, sideSway 2s ease-in-out 4 alternate;
+      animation-fill-mode: forwards;
+      animation-delay: .65s;
+    }
+    .open .a2{
+      animation: slideUp 5s linear 1, sideSway 4s ease-in-out 2 alternate;
+      animation-fill-mode: forwards;
+      animation-delay: .65s;
+    }
+    .open .a3{
+      animation: slideUp 7s linear 1, sideSway 2s ease-in-out 6 alternate;
+      animation-fill-mode: forwards;
+      animation-delay: .65s;
+    }
+
+    @keyframes slideUp {
+      0% { top: 0; }
+      100% { top: -620px; }
+    }
+
+    @keyframes sideSway {
+      0% { margin-left: 0px; }
+      100% { margin-left: 55px; }
+    }
+
+    /* ===== State machine (envelope) ===== */
+    .opening .flap,
+    .open .flap {
+      transform: rotateX(180deg);
+      transition: transform .45s ease, z-index .45s ease;
+      z-index: 1;
+    }
+
+    .close .flap {
+      transform: rotateX(0deg);
+      transition: transform .45s .55s ease, z-index 1s;
+      z-index: 5;
+    }
+
+    /* slide only (no top-layer jump) */
+    .opening .letter {
+      transform: translateX(-50%) translateY(-120px) scale(1);
+      transition: transform .55s ease;
+      z-index: 2;
+    }
+
+    /* keep slid when open */
+    .open .letter {
+      transform: translateX(-50%) translateY(-120px) scale(1);
+      transition: transform .2s ease;
+      z-index: 2;
+    }
+
+    .close .letter {
+      transform: translateX(-50%) translateY(0) scale(1);
+      transition: transform .55s ease;
+      z-index: 1;
+    }
+
+    /* ===== Controls ===== */
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-weight: 800;
+      background: rgba(255, 255, 255, .08);
+      border: 2px solid rgba(255, 255, 255, .70);
+      color: rgba(255, 255, 255, .92);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      min-width: 140px;
+      transition: transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    button:hover {
+      background: rgba(255, 255, 255, .95);
+      color: #111;
+      border-color: rgba(255, 255, 255, .95);
+      transform: translateY(-1px);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: rgba(255,255,255,.86);
+      text-align: center;
+      max-width: min(92vw, 520px);
+      line-height: 1.6;
+      text-shadow: 0 6px 24px rgba(0,0,0,.55);
+    }
+
+    /* ===== Modal (near full-screen letter) ===== */
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      opacity: 0;
+      transition: opacity .25s ease;
+    }
+
+    .modal-card {
+      position: relative;
+      width: min(var(--modal-w), var(--modal-max-w));
+      height: min(var(--modal-h), var(--modal-max-h));
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, .35);
+      overflow: hidden;
+
+      opacity: 0;
+      transform: translateY(14px) scale(.94);
+      transition: opacity .25s ease, transform .25s ease;
+      will-change: opacity, transform;
+
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    .modal.show { pointer-events: auto; }
+
+    .modal.show .modal-backdrop { opacity: 1; }
+
+    .modal.show .modal-card {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      transition-delay: .05s;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, .08);
+      background: linear-gradient(180deg, rgba(235, 245, 255, .8), rgba(255, 255, 255, 1));
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 16px;
+      color: #1b2a3a;
+      letter-spacing: .02em;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      min-width: unset;
+      padding: 0;
+      border-radius: 12px;
+      font-weight: 900;
+      background: #ff3b30;
+      color: #fff;
+      border: none;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: #ff3b30;
+      color: #fff;
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .modal-body {
+      padding: 14px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .letter-text {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #2c3e50;
+      white-space: pre-wrap;
+    }
+
+    .modal-footer {
+      padding: 10px 14px 14px;
+      display: flex;
+      justify-content: flex-end;
+      color: #1b2a3a;
+      font-weight: 800;
+    }
+
+    /* More comfortable on small phones */
+    @media (max-width: 420px) {
+      :root {
+        --env-width: 300px;
+        --env-height: 200px;
+        --modal-w: 96vw;
+        --modal-h: 86vh;
+      }
+
+      .letter-text { font-size: 14px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="stage">
+    <div id="envelope" class="close" aria-label="envelope">
+      <div class="front flap"></div>
+      <div class="front pocket"></div>
+
+      <div class="letter"></div>
+
+      <div class="hearts">
+        <div class="heart a1"></div>
+        <div class="heart a2"></div>
+        <div class="heart a3"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="open" type="button">Open</button>
+      <button id="reset" type="button">Reset</button>
+    </div>
+
+    <div class="hint">提示：點信封也可以打開（開啟前就會看到愛心，打開後愛心才會飛出去）</div>
+  </div>
+
+  <!-- Near full-screen letter modal -->
+  <div id="modal" class="modal" aria-hidden="true">
+    <div class="modal-backdrop" id="backdrop"></div>
+
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="letter">
+      <div class="modal-header">
+        <h3 class="modal-title">To: 最可愛的江昀珈寶貝</h3>
+        <button class="modal-close" id="closeModal" type="button">x</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="letter-text">
+寶寶今天想跟你說：
+謝謝妳一直都在。
+
+就算生活很忙、很累，
+我還是希望妳記得——
+妳真的很棒。
+
+新年快樂！寶寶
+願我們能一直走下去，直到永遠。
+
+<a href="4.html" style="background-color:#fc6a46;color:white;padding:6px 28px;border-radius:20px;text-decoration:none;display:inline-block;margin-top:10px;">點我</a>
+        </p>
+      </div>
+
+      <div class="modal-footer">— 最愛妳的姜承言</div>
+    </div>
+  </div>
+
+  <script>
+    const envelope = document.getElementById("envelope");
+    const btnOpen = document.getElementById("open");
+    const btnReset = document.getElementById("reset");
+
+    const modal = document.getElementById("modal");
+    const backdrop = document.getElementById("backdrop");
+    const closeModalBtn = document.getElementById("closeModal");
+
+    // Must match `.opening .letter { transition: transform .55s ... }`
+    const SLIDE_MS = 550;
+
+    let openTimer = null;
+
+    function showModal() {
+      modal.classList.add("show");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    function hideModal() {
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function openEnv() {
+      if (envelope.classList.contains("open") || envelope.classList.contains("opening")) return;
+
+      envelope.classList.remove("close");
+      envelope.classList.add("opening");
+
+      clearTimeout(openTimer);
+      openTimer = setTimeout(() => {
+        envelope.classList.remove("opening");
+        envelope.classList.add("open");
+        showModal();
+      }, SLIDE_MS);
+    }
+
+    function closeEnv() {
+      clearTimeout(openTimer);
+      hideModal();
+
+      // reset heart positions (so they re-animate next time)
+      const hearts = envelope.querySelectorAll(".heart");
+      hearts.forEach(h => {
+        h.style.top = "";
+        h.style.marginLeft = "";
+      });
+
+      envelope.classList.remove("open", "opening");
+      envelope.classList.add("close");
+    }
+
+    envelope.addEventListener("click", openEnv);
+    btnOpen.addEventListener("click", openEnv);
+    btnReset.addEventListener("click", closeEnv);
+
+    backdrop.addEventListener("click", closeEnv);
+    closeModalBtn.addEventListener("click", closeEnv);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal.classList.contains("show")) closeEnv();
+    });
+  </script>
+</body>
+</html>

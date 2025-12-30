@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2026 New Year Fireworks</title>
+    <style>
+        :root {
+            --bg1: #06081a;
+            --bg2: #0b1a3a;
+            --text: #ffffff;
+            --muted: rgba(255, 255, 255, .72);
+            --glass: rgba(0, 0, 0, .35);
+            --line: rgba(255, 255, 255, .14);
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: radial-gradient(1200px 700px at 30% 20%, rgba(120, 160, 255, .18), transparent 60%),
+                radial-gradient(900px 600px at 70% 75%, rgba(255, 80, 200, .12), transparent 60%),
+                linear-gradient(180deg, var(--bg1), var(--bg2));
+            overflow: hidden;
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Microsoft JhengHei", Arial, sans-serif;
+        }
+
+        canvas#fx {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        /* Overlay UI */
+        .ui {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            pointer-events: none;
+            padding: 18px;
+        }
+
+        .card {
+            width: min(92vw, 520px);
+            border: 1px solid var(--line);
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            padding: 18px 16px;
+            box-shadow: 0 26px 80px rgba(0, 0, 0, .35);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 18px;
+            letter-spacing: .06em;
+            margin: 0 0 10px;
+            color: rgba(255, 255, 255, .92);
+        }
+
+        .big {
+            font-size: clamp(56px, 12vw, 96px);
+            font-weight: 900;
+            letter-spacing: .03em;
+            margin: 0;
+            line-height: 1;
+            text-shadow: 0 10px 40px rgba(0, 0, 0, .55);
+        }
+
+        .sub {
+            margin: 10px 0 0;
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .banner {
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .38);
+            border: 1px solid rgba(255, 255, 255, .14);
+            color: rgba(255, 255, 255, .86);
+            font-weight: 700;
+            letter-spacing: .04em;
+            pointer-events: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* "Happy New Year" */
+        .hny {
+            position: fixed;
+            left: 50%;
+            top: 24%;
+            transform: translateX(-50%);
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity .6s ease;
+        }
+
+        .hny.show {
+            opacity: 1;
+        }
+
+        .hny h1 {
+            margin: 0;
+            font-size: clamp(28px, 6vw, 52px);
+            letter-spacing: .08em;
+            text-shadow: 0 10px 60px rgba(0, 0, 0, .55);
+        }
+
+        .hny p {
+            margin: 10px 0 0;
+            color: rgba(255, 255, 255, .78);
+            font-weight: 700;
+            letter-spacing: .04em;
+            font-size: 14px;
+        }
+
+        /* Small screens */
+        @media (max-width: 420px) {
+            .card {
+                padding: 16px 14px;
+                border-radius: 16px;
+            }
+
+            .title {
+                font-size: 16px;
+            }
+
+            .sub {
+                font-size: 13px;
+            }
+
+            .banner {
+                top: 12px;
+            }
+
+            .hny {
+                top: 18%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="fx"></canvas>
+
+    <div class="banner" id="banner">以裝置時間判斷：等待 2026/01/01 00:00:00</div>
+
+    <div class="hny" id="hny">
+        <h1>HAPPY NEW YEAR 2026</h1>
+        <p>願你 2026 一切順利</p>
+    </div>
+
+    <div class="ui" id="ui">
+        <div class="card" id="card">
+            <p class="title" id="cardTitle">跨年倒數</p>
+            <p class="big" id="bigText">10</p>
+            <p class="sub" id="subText">將於 2026/01/01 00:00:00 啟動煙火</p>
+        </div>
+    </div>
+
+    <script>
+        /**********************
+         * Time Gate (Device local time)
+         **********************/
+        const TARGET = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026/01/01 00:00:00 local device time
+        const COUNTDOWN_WINDOW_MS = 10_000; // 10 seconds
+        const FIREWORKS_DURATION_MS = 30_000; // 30 seconds
+        const REDIRECT_URL = "2.html";
+
+        const ui = document.getElementById("ui");
+        const cardTitle = document.getElementById("cardTitle");
+        const bigText = document.getElementById("bigText");
+        const subText = document.getElementById("subText");
+        const banner = document.getElementById("banner");
+        const hny = document.getElementById("hny");
+
+        function pad2(n) { return String(n).padStart(2, "0"); }
+        function fmt(dt) {
+            return `${dt.getFullYear()}/${pad2(dt.getMonth() + 1)}/${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:${pad2(dt.getSeconds())}`;
+        }
+
+        /**********************
+         * Fireworks Engine (Canvas)
+         **********************/
+        const canvas = document.getElementById("fx");
+        const ctx = canvas.getContext("2d", { alpha: true });
+
+        let W = 0, H = 0, DPR = 1;
+        function resize() {
+            DPR = Math.min(2, window.devicePixelRatio || 1);
+            W = Math.floor(window.innerWidth);
+            H = Math.floor(window.innerHeight);
+            canvas.width = Math.floor(W * DPR);
+            canvas.height = Math.floor(H * DPR);
+            canvas.style.width = W + "px";
+            canvas.style.height = H + "px";
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        }
+        window.addEventListener("resize", resize, { passive: true });
+        resize();
+
+        // Utility
+        const rand = (a, b) => a + Math.random() * (b - a);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+        // Particles
+        const gravity = 0.055;
+        const friction = 0.985;
+
+        class Particle {
+            constructor(x, y, vx, vy, color, life, trail = false) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.life = life;
+                this.maxLife = life;
+                this.color = color;
+                this.size = rand(1.0, 2.4);
+                this.trail = trail;
+                this.alpha = 1;
+            }
+            step() {
+                this.vx *= friction;
+                this.vy *= friction;
+                this.vy += gravity;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= 1;
+                this.alpha = clamp(this.life / this.maxLife, 0, 1);
+            }
+            draw() {
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class Rocket {
+            constructor() {
+                this.x = rand(W * 0.12, W * 0.88);
+                this.y = H + 10;
+                this.vx = rand(-0.7, 0.7);
+                this.vy = rand(-10.5, -12.5);
+                this.color = pickColor();
+                this.exploded = false;
+                this.trail = [];
+            }
+            step() {
+                this.vx *= 0.995;
+                this.vy += gravity * 0.35;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // trail particles (smoke-like)
+                particles.push(new Particle(this.x, this.y, rand(-0.6, 0.6), rand(0.6, 1.6), "rgba(255,255,255,.45)", rand(18, 26)));
+                if (this.vy > -2.2 || this.y < rand(H * 0.18, H * 0.45)) {
+                    this.explode();
+                }
+            }
+            explode() {
+                if (this.exploded) return;
+                this.exploded = true;
+
+                const count = Math.floor(rand(70, 120));
+                const speed = rand(2.5, 6.2);
+                const baseHue = rand(0, 360);
+
+                for (let i = 0; i < count; i++) {
+                    const a = (Math.PI * 2) * (i / count) + rand(-0.02, 0.02);
+                    const s = speed * rand(0.55, 1.05);
+                    const vx = Math.cos(a) * s + rand(-0.25, 0.25);
+                    const vy = Math.sin(a) * s + rand(-0.25, 0.25);
+                    const color = `hsla(${(baseHue + rand(-35, 35)) % 360}, 95%, 65%, 1)`;
+                    particles.push(new Particle(this.x, this.y, vx, vy, color, Math.floor(rand(40, 72))));
+                }
+
+                // bright flash
+                flashes.push({ x: this.x, y: this.y, r: rand(40, 90), a: 1 });
+            }
+        }
+
+        function pickColor() {
+            const hues = [0, 28, 55, 120, 180, 210, 260, 300];
+            const h = hues[Math.floor(Math.random() * hues.length)];
+            return `hsla(${h}, 95%, 65%, 1)`;
+        }
+
+        const rockets = [];
+        const particles = [];
+        const flashes = [];
+
+        let running = false;
+        let startAt = null;
+        let rafId = null;
+
+        function spawnRocket() {
+            rockets.push(new Rocket());
+        }
+
+        function drawBackground() {
+            // subtle fade for trails
+            ctx.globalAlpha = 0.18;
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = 1;
+        }
+
+        function drawFlashes() {
+            for (let i = flashes.length - 1; i >= 0; i--) {
+                const f = flashes[i];
+                f.a *= 0.86;
+                ctx.globalAlpha = f.a;
+                const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
+                g.addColorStop(0, "rgba(255,255,255,.85)");
+                g.addColorStop(0.4, "rgba(255,255,255,.18)");
+                g.addColorStop(1, "rgba(255,255,255,0)");
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                ctx.fill();
+                if (f.a < 0.03) flashes.splice(i, 1);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function tick() {
+            if (!running) return;
+
+            drawBackground();
+
+            // spawn frequency (tuned to device)
+            const t = performance.now();
+            if (Math.random() < 0.13) spawnRocket();
+
+            // rockets
+            for (let i = rockets.length - 1; i >= 0; i--) {
+                const r = rockets[i];
+                r.step();
+                if (r.exploded) rockets.splice(i, 1);
+            }
+
+            // particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.step();
+                p.draw();
+                if (p.life <= 0 || p.y > H + 80) particles.splice(i, 1);
+            }
+
+            drawFlashes();
+
+            // end gate
+            const now = Date.now();
+            if (startAt && now >= startAt + FIREWORKS_DURATION_MS) {
+                // stop and redirect
+                running = false;
+                cancelAnimationFrame(rafId);
+                location.href = REDIRECT_URL;
+                return;
+            }
+
+            rafId = requestAnimationFrame(tick);
+        }
+
+        function startFireworks() {
+            if (running) return;
+            running = true;
+            startAt = Date.now();
+
+            // UI changes
+            ui.classList.add("hidden");
+            banner.textContent = "煙火進行中（30 秒後自動跳轉）";
+            hny.classList.add("show");
+
+            // seed a few rockets instantly
+            for (let i = 0; i < 6; i++) spawnRocket();
+            // initialize background once
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, W, H);
+
+            rafId = requestAnimationFrame(tick);
+        }
+
+        /**********************
+         * Scheduler / Countdown
+         **********************/
+        function showWaiting(msToTarget) {
+            cardTitle.textContent = "等待跨年";
+            bigText.textContent = "—";
+            const sec = Math.ceil(msToTarget / 1000);
+            subText.textContent = `目標時間：${fmt(TARGET)}\n尚餘約 ${sec} 秒`;
+            ui.classList.remove("hidden");
+        }
+
+        function showCountdown(secLeft) {
+            cardTitle.textContent = "跨年倒數";
+            bigText.textContent = String(secLeft);
+            subText.textContent = `將於 ${fmt(TARGET)} 啟動煙火`;
+            ui.classList.remove("hidden");
+        }
+
+        function showMissed() {
+            cardTitle.textContent = "已錯過啟動時間";
+            bigText.textContent = "00";
+            subText.textContent = `本頁只會在 2026/01/01 00:00:00 的瞬間啟動煙火。\n目前裝置時間：${fmt(new Date())}`;
+            ui.classList.remove("hidden");
+            banner.textContent = "已錯過跨年瞬間（不會自動播放）";
+        }
+
+        function loop() {
+            const now = new Date();
+            const nowMs = now.getTime();
+            const targetMs = TARGET.getTime();
+            const diff = targetMs - nowMs;
+
+            // Banner clock
+            banner.textContent = `裝置時間：${fmt(now)} ｜目標：${fmt(TARGET)}`;
+
+            if (diff > COUNTDOWN_WINDOW_MS) {
+                // Too early -> waiting mode (show remaining)
+                showWaiting(diff);
+            } else if (diff > 0) {
+                // In last 10 seconds -> countdown
+                const secLeft = Math.ceil(diff / 1000);
+                showCountdown(secLeft);
+            } else {
+                // diff <= 0 => reached/past target
+                // "瞬間才能執行"：只允許在很短容忍範圍內啟動（避免頁面延遲）
+                const toleranceMs = 1200; // 1.2s window to account for timer drift
+                if (Math.abs(diff) <= toleranceMs) {
+                    startFireworks();
+                    return; // stop loop after start
+                } else {
+                    showMissed();
+                }
+            }
+
+            requestAnimationFrame(loop);
+        }
+        window.TEST_FIREWORK = () => {
+            console.log("🧪 手動測試煙火");
+            startCountdown(10);
+            setTimeout(startFireworks, 10000);
+        };
+        loop();
+
+
+    </script>
+</body>
+
+</html>
