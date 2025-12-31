@@ -3,8 +3,11 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#06081a" />
     <title>2026 New Year Fireworks</title>
+
     <style>
         :root {
             --bg1: #06081a;
@@ -13,6 +16,10 @@
             --muted: rgba(255, 255, 255, .72);
             --glass: rgba(0, 0, 0, .35);
             --line: rgba(255, 255, 255, .14);
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
         }
 
         html,
@@ -25,6 +32,8 @@
             overflow: hidden;
             color: var(--text);
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Microsoft JhengHei", Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
         }
 
         canvas#fx {
@@ -43,13 +52,16 @@
             place-items: center;
             pointer-events: none;
             padding: 18px;
+            padding-top: calc(18px + var(--safe-top));
+            padding-bottom: calc(18px + var(--safe-bottom));
         }
 
         .card {
             width: min(92vw, 520px);
             border: 1px solid var(--line);
             background: var(--glass);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-radius: 18px;
             padding: 18px 16px;
             box-shadow: 0 26px 80px rgba(0, 0, 0, .35);
@@ -82,7 +94,7 @@
 
         .banner {
             position: fixed;
-            top: 18px;
+            top: calc(18px + var(--safe-top));
             left: 50%;
             transform: translateX(-50%);
             padding: 10px 14px;
@@ -93,6 +105,11 @@
             font-weight: 700;
             letter-spacing: .04em;
             pointer-events: none;
+            max-width: min(92vw, 760px);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .hidden {
@@ -103,12 +120,13 @@
         .hny {
             position: fixed;
             left: 50%;
-            top: 24%;
+            top: calc(24% + var(--safe-top));
             transform: translateX(-50%);
             text-align: center;
             pointer-events: none;
             opacity: 0;
             transition: opacity .6s ease;
+            padding: 0 12px;
         }
 
         .hny.show {
@@ -117,7 +135,7 @@
 
         .hny h1 {
             margin: 0;
-            font-size: clamp(28px, 6vw, 52px);
+            font-size: clamp(24px, 6vw, 52px);
             letter-spacing: .08em;
             text-shadow: 0 10px 60px rgba(0, 0, 0, .55);
         }
@@ -128,6 +146,93 @@
             font-weight: 700;
             letter-spacing: .04em;
             font-size: 14px;
+        }
+
+        /* Next Page Button (only show during fireworks) */
+        .next-btn {
+            position: fixed;
+            right: calc(18px + var(--safe-right));
+            bottom: calc(18px + var(--safe-bottom));
+            z-index: 50;
+
+            padding: 12px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(0, 0, 0, .42);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            color: rgba(255, 255, 255, .92);
+            font-weight: 800;
+            letter-spacing: .04em;
+            cursor: pointer;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, .35);
+
+            /* default hidden */
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+
+            transition: transform .2s ease, opacity .2s ease, background .15s ease, border-color .15s ease;
+        }
+
+        .next-btn.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .next-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(0, 0, 0, .55);
+            border-color: rgba(255, 255, 255, .28);
+        }
+
+        .next-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Desktop-only Test Button */
+        .test-btn {
+            position: fixed;
+            left: calc(18px + var(--safe-left));
+            bottom: calc(18px + var(--safe-bottom));
+            z-index: 50;
+            pointer-events: auto;
+
+            padding: 12px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, .18);
+            background: rgba(0, 0, 0, .42);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            color: rgba(255, 255, 255, .92);
+            font-weight: 800;
+            letter-spacing: .04em;
+            cursor: pointer;
+            box-shadow: 0 18px 60px rgba(0, 0, 0, .35);
+
+            transition: transform .15s ease, background .15s ease, border-color .15s ease;
+        }
+
+        .test-btn:hover {
+            transform: translateY(-1px);
+            background: rgba(0, 0, 0, .55);
+            border-color: rgba(255, 255, 255, .28);
+        }
+
+        .test-btn:active {
+            transform: translateY(0);
+        }
+
+        /* ✅ 平板/手機自動隱藏 */
+        @media (max-width: 1024px),
+        (pointer: coarse),
+        (hover: none) {
+            .test-btn {
+                display: none !important;
+            }
         }
 
         /* Small screens */
@@ -146,11 +251,23 @@
             }
 
             .banner {
-                top: 12px;
+                top: calc(12px + var(--safe-top));
             }
 
             .hny {
-                top: 18%;
+                top: calc(18% + var(--safe-top));
+            }
+
+            .next-btn {
+                right: calc(12px + var(--safe-right));
+                bottom: calc(12px + var(--safe-bottom));
+                padding: 11px 13px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hny {
+                transition: none;
             }
         }
     </style>
@@ -174,14 +291,20 @@
         </div>
     </div>
 
+    <!-- 桌機測試用：平板/手機自動隱藏 -->
+    <button class="test-btn" id="testBtn" type="button" aria-label="桌機測試倒數10秒">桌機測試：倒數10秒</button>
+
+    <!-- ✅ 煙火開始後才會顯示 -->
+    <button class="next-btn" id="nextBtn" type="button" aria-label="下一頁">下一頁</button>
+
     <script>
         /**********************
          * Time Gate (Device local time)
          **********************/
-        const TARGET = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026/01/01 00:00:00 local device time
-        const COUNTDOWN_WINDOW_MS = 10_000; // 10 seconds
-        const FIREWORKS_DURATION_MS = 30_000; // 30 seconds
-        const REDIRECT_URL = "2.html";
+        let TARGET = new Date(2026, 0, 1, 0, 0, 0, 0); // 2026/01/01 00:00:00 (device local time)
+        const COUNTDOWN_WINDOW_MS = 10_000;       // last 10 seconds countdown
+        const FIREWORKS_DURATION_MS = 30_000;     // fireworks duration
+        const REDIRECT_URL = "2.html";            // same folder
 
         const ui = document.getElementById("ui");
         const cardTitle = document.getElementById("cardTitle");
@@ -189,137 +312,203 @@
         const subText = document.getElementById("subText");
         const banner = document.getElementById("banner");
         const hny = document.getElementById("hny");
+        const nextBtn = document.getElementById("nextBtn");
+        const testBtn = document.getElementById("testBtn");
 
         function pad2(n) { return String(n).padStart(2, "0"); }
         function fmt(dt) {
             return `${dt.getFullYear()}/${pad2(dt.getMonth() + 1)}/${pad2(dt.getDate())} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:${pad2(dt.getSeconds())}`;
         }
 
+        nextBtn.addEventListener("click", () => {
+            location.href = REDIRECT_URL;
+        });
+
         /**********************
-         * Fireworks Engine (Canvas)
+     * Utils (MUST be before use)
+     **********************/
+        const rand = (a, b) => a + Math.random() * (b - a);
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        const lerp = (a, b, t) => a + (b - a) * t;
+
+
+        /**********************
+         * Fireworks Engine (Canvas) - More "fancy"
          **********************/
         const canvas = document.getElementById("fx");
         const ctx = canvas.getContext("2d", { alpha: true });
 
+        // performance heuristics
+        const isSmallScreen = Math.min(screen.width, screen.height) <= 480;
+        const isTouch = matchMedia("(pointer: coarse)").matches;
+        const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const lowPowerMode = reduceMotion || (isSmallScreen && isTouch);
+
         let W = 0, H = 0, DPR = 1;
+
         function resize() {
-            DPR = Math.min(2, window.devicePixelRatio || 1);
-            W = Math.floor(window.innerWidth);
-            H = Math.floor(window.innerHeight);
+            const vw = window.visualViewport;
+            const w = Math.floor(vw ? vw.width : window.innerWidth);
+            const h = Math.floor(vw ? vw.height : window.innerHeight);
+
+            const maxDpr = lowPowerMode ? 1.5 : 2;
+            DPR = Math.min(maxDpr, window.devicePixelRatio || 1);
+
+            W = w;
+            H = h;
+
             canvas.width = Math.floor(W * DPR);
             canvas.height = Math.floor(H * DPR);
             canvas.style.width = W + "px";
             canvas.style.height = H + "px";
             ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+            buildStars();
         }
+
         window.addEventListener("resize", resize, { passive: true });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", resize, { passive: true });
+            window.visualViewport.addEventListener("scroll", resize, { passive: true });
+        }
         resize();
 
-        // Utility
-        const rand = (a, b) => a + Math.random() * (b - a);
-        const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+        // utilities
+       
 
-        // Particles
-        const gravity = 0.055;
-        const friction = 0.985;
+        // physics
+        const gravity = lowPowerMode ? 0.048 : 0.055;
+        const friction = lowPowerMode ? 0.988 : 0.985;
 
+        // caps
+        const MAX_PARTICLES = lowPowerMode ? 1100 : 2400;
+        const MAX_ROCKETS = lowPowerMode ? 6 : 10;
+        const MAX_FLASHES = lowPowerMode ? 10 : 22;
+        const MAX_BURSTLETS = lowPowerMode ? 18 : 34;
+
+        // stars background
+
+        function buildStars() {
+            const count = Math.floor((W * H) / (lowPowerMode ? 22000 : 16000));
+            stars = new Array(count).fill(0).map(() => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() < 0.9 ? rand(0.5, 1.2) : rand(1.2, 2.0),
+                a: rand(0.15, 0.7),
+                tw: rand(0.004, 0.016),
+                ph: rand(0, Math.PI * 2),
+            }));
+        }
+
+        function pickHue() {
+            const hues = [0, 25, 45, 55, 120, 170, 205, 230, 260, 300, 330];
+            return hues[(Math.random() * hues.length) | 0];
+        }
+
+        function hsla(h, s, l, a) {
+            return `hsla(${h}, ${s}%, ${l}%, ${a})`;
+        }
+
+        function makeBrightColor(h) {
+            return hsla(h, 95, 65, 1);
+        }
+
+        function makeGold() {
+            return hsla(rand(38, 55), 95, 62, 1);
+        }
+
+        // particle
         class Particle {
-            constructor(x, y, vx, vy, color, life, trail = false) {
+            constructor(x, y, vx, vy, color, life, opts = {}) {
                 this.x = x; this.y = y;
+                this.px = x; this.py = y;
                 this.vx = vx; this.vy = vy;
                 this.life = life;
                 this.maxLife = life;
                 this.color = color;
-                this.size = rand(1.0, 2.4);
-                this.trail = trail;
+
+                this.size = opts.size ?? rand(1.0, 2.6);
+                this.drag = opts.drag ?? friction;
+                this.g = opts.g ?? 1.0;
+                this.type = opts.type ?? "dot"; // dot | streak | glitter
+                this.twinkle = opts.twinkle ?? 0;
                 this.alpha = 1;
+
+                // fuse -> secondary break (for multi-burst)
+                this.fuse = opts.fuse ?? 0;
+                this.breakType = opts.breakType ?? null;
+                this.breakHue = opts.breakHue ?? null;
             }
+
             step() {
-                this.vx *= friction;
-                this.vy *= friction;
-                this.vy += gravity;
+                this.px = this.x;
+                this.py = this.y;
+
+                this.vx *= this.drag;
+                this.vy *= this.drag;
+                this.vy += gravity * this.g;
+
                 this.x += this.vx;
                 this.y += this.vy;
+
                 this.life -= 1;
-                this.alpha = clamp(this.life / this.maxLife, 0, 1);
-            }
-            draw() {
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fill();
-            }
-        }
+                const t = clamp(this.life / this.maxLife, 0, 1);
+                this.alpha = t;
 
-        class Rocket {
-            constructor() {
-                this.x = rand(W * 0.12, W * 0.88);
-                this.y = H + 10;
-                this.vx = rand(-0.7, 0.7);
-                this.vy = rand(-10.5, -12.5);
-                this.color = pickColor();
-                this.exploded = false;
-                this.trail = [];
-            }
-            step() {
-                this.vx *= 0.995;
-                this.vy += gravity * 0.35;
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // trail particles (smoke-like)
-                particles.push(new Particle(this.x, this.y, rand(-0.6, 0.6), rand(0.6, 1.6), "rgba(255,255,255,.45)", rand(18, 26)));
-                if (this.vy > -2.2 || this.y < rand(H * 0.18, H * 0.45)) {
-                    this.explode();
-                }
-            }
-            explode() {
-                if (this.exploded) return;
-                this.exploded = true;
-
-                const count = Math.floor(rand(70, 120));
-                const speed = rand(2.5, 6.2);
-                const baseHue = rand(0, 360);
-
-                for (let i = 0; i < count; i++) {
-                    const a = (Math.PI * 2) * (i / count) + rand(-0.02, 0.02);
-                    const s = speed * rand(0.55, 1.05);
-                    const vx = Math.cos(a) * s + rand(-0.25, 0.25);
-                    const vy = Math.sin(a) * s + rand(-0.25, 0.25);
-                    const color = `hsla(${(baseHue + rand(-35, 35)) % 360}, 95%, 65%, 1)`;
-                    particles.push(new Particle(this.x, this.y, vx, vy, color, Math.floor(rand(40, 72))));
+                if (this.fuse > 0) {
+                    this.fuse -= 1;
+                    if (this.fuse === 0 && this.breakType) {
+                        spawnSecondaryBurst(this.x, this.y, this.breakType, this.breakHue ?? pickHue());
+                    }
                 }
 
-                // bright flash
-                flashes.push({ x: this.x, y: this.y, r: rand(40, 90), a: 1 });
+                // crackle near end
+                if (this.life === 10 && Math.random() < 0.25 && particles.length < MAX_PARTICLES - 80) {
+                    for (let i = 0; i < 10; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const s = rand(0.8, 2.2);
+                        particles.push(new Particle(
+                            this.x, this.y,
+                            Math.cos(a) * s,
+                            Math.sin(a) * s,
+                            "rgba(255,255,255,1)",
+                            Math.floor(rand(10, 18)),
+                            { size: rand(0.6, 1.3), type: "glitter", twinkle: rand(0.2, 0.7), g: 0.75, drag: 0.94 }
+                        ));
+                    }
+                }
+            }
+
+            draw(time) {
+                // twinkle effect
+                let a = this.alpha;
+                if (this.twinkle > 0) {
+                    a *= 0.65 + 0.35 * Math.sin(time * 0.02 + this.x * 0.01 + this.y * 0.01);
+                }
+
+                ctx.globalAlpha = a;
+
+                if (this.type === "streak") {
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = Math.max(1, this.size * 0.9);
+                    ctx.beginPath();
+                    ctx.moveTo(this.px, this.py);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
         }
 
-        function pickColor() {
-            const hues = [0, 28, 55, 120, 180, 210, 260, 300];
-            const h = hues[Math.floor(Math.random() * hues.length)];
-            return `hsla(${h}, 95%, 65%, 1)`;
-        }
-
-        const rockets = [];
-        const particles = [];
+        // flashes (bloom)
         const flashes = [];
-
-        let running = false;
-        let startAt = null;
-        let rafId = null;
-
-        function spawnRocket() {
-            rockets.push(new Rocket());
-        }
-
-        function drawBackground() {
-            // subtle fade for trails
-            ctx.globalAlpha = 0.18;
-            ctx.fillStyle = "rgba(0,0,0,1)";
-            ctx.fillRect(0, 0, W, H);
-            ctx.globalAlpha = 1;
+        function addFlash(x, y, r) {
+            if (flashes.length >= MAX_FLASHES) return;
+            flashes.push({ x, y, r, a: 1 });
         }
 
         function drawFlashes() {
@@ -327,49 +516,381 @@
                 const f = flashes[i];
                 f.a *= 0.86;
                 ctx.globalAlpha = f.a;
+
                 const g = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r);
                 g.addColorStop(0, "rgba(255,255,255,.85)");
-                g.addColorStop(0.4, "rgba(255,255,255,.18)");
+                g.addColorStop(0.35, "rgba(255,255,255,.20)");
                 g.addColorStop(1, "rgba(255,255,255,0)");
                 ctx.fillStyle = g;
                 ctx.beginPath();
                 ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
                 ctx.fill();
+
                 if (f.a < 0.03) flashes.splice(i, 1);
             }
             ctx.globalAlpha = 1;
         }
 
-        function tick() {
+        // rockets
+        const rockets = [];
+        const particles = [];
+        const burstlets = []; // small comets that re-burst
+
+        class Burstlet {
+            constructor(x, y, vx, vy, hue, fuse) {
+                this.x = x; this.y = y;
+                this.vx = vx; this.vy = vy;
+                this.hue = hue;
+                this.fuse = fuse; // frames until burst
+            }
+            step() {
+                this.vx *= 0.992;
+                this.vy *= 0.992;
+                this.vy += gravity * 0.55;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.fuse -= 1;
+
+                // comet trail
+                if (particles.length < MAX_PARTICLES) {
+                    particles.push(new Particle(
+                        this.x, this.y,
+                        rand(-0.35, 0.35), rand(-0.2, 0.6),
+                        hsla(this.hue, 95, 70, 1),
+                        Math.floor(rand(18, 28)),
+                        { size: rand(0.8, 1.8), type: "streak", g: 0.55, drag: 0.92, twinkle: 0.15 }
+                    ));
+                }
+
+                if (this.fuse <= 0) {
+                    spawnSecondaryBurst(this.x, this.y, "sphere", this.hue);
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        class Rocket {
+            constructor() {
+                this.x = rand(W * 0.14, W * 0.86);
+                this.y = H + 10;
+                this.vx = rand(-0.7, 0.7);
+                this.vy = rand(lowPowerMode ? -9.0 : -11.6, lowPowerMode ? -10.6 : -13.2);
+                this.hue = pickHue();
+                this.kind = pickKind();
+                this.exploded = false;
+            }
+
+            step() {
+                this.vx *= 0.995;
+                this.vy += gravity * 0.35;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // comet trail (colored)
+                if (particles.length < MAX_PARTICLES) {
+                    const col = hsla(this.hue, 95, 75, 1);
+                    particles.push(new Particle(
+                        this.x, this.y,
+                        rand(-0.4, 0.4), rand(0.7, 1.8),
+                        col,
+                        Math.floor(rand(14, 22)),
+                        { size: rand(0.9, 2.0), type: "streak", g: 0.35, drag: 0.90, twinkle: 0.08 }
+                    ));
+                    // soft smoke
+                    if (Math.random() < 0.55) {
+                        particles.push(new Particle(
+                            this.x, this.y,
+                            rand(-0.25, 0.25), rand(0.2, 1.0),
+                            "rgba(255,255,255,.35)",
+                            Math.floor(rand(18, 28)),
+                            { size: rand(0.8, 2.0), type: "dot", g: 0.25, drag: 0.96, twinkle: 0 }
+                        ));
+                    }
+                }
+
+                // explode condition
+                const peak = rand(H * 0.16, H * 0.42);
+                if (this.vy > -2.2 || this.y < peak) {
+                    this.explode();
+                }
+            }
+
+            explode() {
+                if (this.exploded) return;
+                this.exploded = true;
+
+                addFlash(this.x, this.y, rand(lowPowerMode ? 70 : 90, lowPowerMode ? 110 : 150));
+                spawnPrimaryBurst(this.x, this.y, this.kind, this.hue);
+            }
+        }
+
+        function pickKind() {
+            const r = Math.random();
+            if (r < 0.40) return "sphere";
+            if (r < 0.62) return "ring";
+            if (r < 0.78) return "willow";
+            if (r < 0.90) return "double";
+            return "heart";
+        }
+
+        function spawnSphere(x, y, hue) {
+            const baseCount = lowPowerMode ? rand(70, 105) : rand(110, 170);
+            const count = Math.floor(baseCount);
+            const speed = rand(lowPowerMode ? 2.2 : 2.8, lowPowerMode ? 4.6 : 6.6);
+
+            for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
+                const a = (Math.PI * 2) * (i / count) + rand(-0.02, 0.02);
+                const s = speed * rand(0.55, 1.05);
+                const vx = Math.cos(a) * s + rand(-0.25, 0.25);
+                const vy = Math.sin(a) * s + rand(-0.25, 0.25);
+
+                const withFuse = !lowPowerMode && Math.random() < 0.18;
+
+                particles.push(new Particle(x, y, vx, vy, makeBrightColor(hue), Math.floor(rand(52, 88)), {
+                    size: rand(1.0, 2.8),
+                    type: Math.random() < 0.55 ? "streak" : "dot",
+                    g: rand(0.65, 1.05),
+                    drag: rand(0.965, 0.985),
+                    twinkle: rand(0, 0.25),
+                    fuse: withFuse ? Math.floor(rand(12, 22)) : 0,
+                    breakType: withFuse ? (Math.random() < 0.5 ? "ring" : "sphere") : null,
+                    breakHue: withFuse ? ((hue + rand(-25, 25) + 360) % 360) : null
+                }));
+            }
+        }
+
+        function spawnRing(x, y, hue) {
+            const count = Math.floor(lowPowerMode ? rand(54, 78) : rand(78, 120));
+            const speed = rand(lowPowerMode ? 2.2 : 2.6, lowPowerMode ? 4.2 : 5.2);
+
+            for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
+                const a = (Math.PI * 2) * (i / count);
+                const s = speed * rand(0.92, 1.05);
+                const vx = Math.cos(a) * s;
+                const vy = Math.sin(a) * s;
+
+                particles.push(new Particle(x, y, vx, vy, makeBrightColor(hue), Math.floor(rand(50, 78)), {
+                    size: rand(1.0, 2.4),
+                    type: "streak",
+                    g: rand(0.55, 0.95),
+                    drag: rand(0.965, 0.985),
+                    twinkle: rand(0.05, 0.22)
+                }));
+            }
+        }
+
+        function spawnWillow(x, y) {
+            const hue = rand(38, 55);
+            const count = Math.floor(lowPowerMode ? rand(70, 105) : rand(120, 190));
+            const speed = rand(lowPowerMode ? 2.0 : 2.4, lowPowerMode ? 4.0 : 5.2);
+
+            for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
+                const a = (Math.PI * 2) * (i / count) + rand(-0.03, 0.03);
+                const s = speed * rand(0.45, 1.05);
+
+                const vx = Math.cos(a) * s + rand(-0.15, 0.15);
+                const vy = Math.sin(a) * s + rand(-0.15, 0.15);
+
+                particles.push(new Particle(x, y, vx, vy, makeGold(), Math.floor(rand(78, 120)), {
+                    size: rand(1.0, 2.6),
+                    type: "streak",
+                    g: rand(0.95, 1.25),
+                    drag: rand(0.975, 0.992),
+                    twinkle: rand(0.10, 0.35)
+                }));
+            }
+        }
+
+        function spawnHeart(x, y, hue) {
+            const pts = Math.floor(lowPowerMode ? 70 : 120);
+            const scale = lowPowerMode ? rand(0.62, 0.78) : rand(0.78, 0.98);
+            const speed = rand(lowPowerMode ? 2.0 : 2.3, lowPowerMode ? 4.0 : 5.0);
+
+            for (let i = 0; i < pts && particles.length < MAX_PARTICLES; i++) {
+                const t = (Math.PI * 2) * (i / pts);
+                const hx = 16 * Math.pow(Math.sin(t), 3);
+                const hy = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
+
+                const nx = hx / 18;
+                const ny = -hy / 18;
+
+                const vx = nx * speed * rand(0.9, 1.1) + rand(-0.1, 0.1);
+                const vy = ny * speed * rand(0.9, 1.1) + rand(-0.1, 0.1);
+
+                particles.push(new Particle(x, y, vx, vy, makeBrightColor(hue), Math.floor(rand(62, 92)), {
+                    size: rand(1.0, 2.4) * scale,
+                    type: "streak",
+                    g: rand(0.65, 0.95),
+                    drag: rand(0.965, 0.985),
+                    twinkle: rand(0.08, 0.25)
+                }));
+            }
+        }
+
+        function spawnDouble(x, y, hue) {
+            spawnSphere(x, y, hue);
+
+            if (!lowPowerMode) {
+                const n = Math.floor(rand(10, 16));
+                for (let i = 0; i < n && burstlets.length < MAX_BURSTLETS; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const s = rand(2.2, 4.2);
+                    burstlets.push(new Burstlet(
+                        x, y,
+                        Math.cos(a) * s,
+                        Math.sin(a) * s,
+                        (hue + rand(-25, 25) + 360) % 360,
+                        Math.floor(rand(14, 26))
+                    ));
+                }
+            }
+
+            if (particles.length < MAX_PARTICLES) {
+                for (let i = 0; i < 16; i++) {
+                    const a = (Math.PI * 2) * (i / 16);
+                    const s = rand(1.8, 2.6);
+                    particles.push(new Particle(x, y, Math.cos(a) * s, Math.sin(a) * s, makeBrightColor(hue), 40, {
+                        size: rand(1.0, 1.8),
+                        type: "dot",
+                        g: 0.45,
+                        drag: 0.95,
+                        twinkle: 0.10,
+                        fuse: Math.floor(rand(10, 16)),
+                        breakType: "ring",
+                        breakHue: (hue + rand(-40, 40) + 360) % 360
+                    }));
+                }
+            }
+        }
+
+        function spawnPrimaryBurst(x, y, kind, hue) {
+            const h = (hue + rand(-18, 18) + 360) % 360;
+
+            switch (kind) {
+                case "ring": spawnRing(x, y, h); break;
+                case "willow": spawnWillow(x, y); break;
+                case "double": spawnDouble(x, y, h); break;
+                case "heart": spawnHeart(x, y, h); break;
+                default: spawnSphere(x, y, h); break;
+            }
+
+            if (!reduceMotion && particles.length < MAX_PARTICLES - 120) {
+                const sprinkle = lowPowerMode ? 22 : 40;
+                for (let i = 0; i < sprinkle; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const s = rand(0.6, 2.2);
+                    particles.push(new Particle(
+                        x, y,
+                        Math.cos(a) * s,
+                        Math.sin(a) * s,
+                        "rgba(255,255,255,1)",
+                        Math.floor(rand(18, 32)),
+                        { size: rand(0.6, 1.3), type: "glitter", twinkle: rand(0.2, 0.7), g: 0.55, drag: 0.93 }
+                    ));
+                }
+            }
+        }
+
+        function spawnSecondaryBurst(x, y, kind, hue) {
+            addFlash(x, y, rand(40, 70));
+            if (kind === "ring") {
+                spawnRing(x, y, hue);
+            } else {
+                const count = Math.floor(lowPowerMode ? rand(26, 40) : rand(34, 58));
+                const speed = rand(lowPowerMode ? 1.6 : 1.9, lowPowerMode ? 3.0 : 3.6);
+                for (let i = 0; i < count && particles.length < MAX_PARTICLES; i++) {
+                    const a = (Math.PI * 2) * (i / count);
+                    const s = speed * rand(0.75, 1.15);
+                    const vx = Math.cos(a) * s + rand(-0.15, 0.15);
+                    const vy = Math.sin(a) * s + rand(-0.15, 0.15);
+                    particles.push(new Particle(
+                        x, y, vx, vy,
+                        makeBrightColor(hue),
+                        Math.floor(rand(30, 48)),
+                        { size: rand(0.9, 2.0), type: "streak", g: 0.65, drag: 0.96, twinkle: 0.18 }
+                    ));
+                }
+            }
+        }
+
+        // background
+        let starsBuilt = false;
+        function drawBackground(time) {
+            ctx.globalCompositeOperation = "source-over";
+            ctx.globalAlpha = lowPowerMode ? 0.22 : 0.16;
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = 1;
+
+            if (!starsBuilt) {
+                buildStars();
+                starsBuilt = true;
+            }
+
+            ctx.globalAlpha = 0.55;
+            ctx.fillStyle = "rgba(255,255,255,1)";
+            for (let i = 0; i < stars.length; i++) {
+                const s = stars[i];
+                const tw = 0.55 + 0.45 * Math.sin(time * s.tw + s.ph);
+                ctx.globalAlpha = s.a * tw * 0.55;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            ctx.globalAlpha = 0.10;
+            ctx.fillStyle = "rgba(120,160,255,1)";
+            ctx.fillRect(0, 0, W, H);
+            ctx.globalAlpha = 1;
+        }
+
+        // engine state
+        let running = false;
+        let scheduleActive = true;
+        let startAt = null;
+        let rafId = null;
+
+        function spawnRocket() {
+            if (rockets.length >= MAX_ROCKETS) return;
+            rockets.push(new Rocket());
+        }
+
+        function tick(time) {
             if (!running) return;
 
-            drawBackground();
+            drawBackground(time);
 
-            // spawn frequency (tuned to device)
-            const t = performance.now();
-            if (Math.random() < 0.13) spawnRocket();
+            ctx.globalCompositeOperation = "lighter";
 
-            // rockets
+            const spawnProb = lowPowerMode ? 0.11 : 0.16;
+            if (!reduceMotion && Math.random() < spawnProb) spawnRocket();
+
             for (let i = rockets.length - 1; i >= 0; i--) {
                 const r = rockets[i];
                 r.step();
                 if (r.exploded) rockets.splice(i, 1);
             }
 
-            // particles
+            for (let i = burstlets.length - 1; i >= 0; i--) {
+                const ok = burstlets[i].step();
+                if (!ok) burstlets.splice(i, 1);
+            }
+
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
                 p.step();
-                p.draw();
-                if (p.life <= 0 || p.y > H + 80) particles.splice(i, 1);
+                p.draw(time);
+                if (p.life <= 0 || p.y > H + 120) particles.splice(i, 1);
             }
 
             drawFlashes();
 
-            // end gate
+            ctx.globalCompositeOperation = "source-over";
+
             const now = Date.now();
             if (startAt && now >= startAt + FIREWORKS_DURATION_MS) {
-                // stop and redirect
                 running = false;
                 cancelAnimationFrame(rafId);
                 location.href = REDIRECT_URL;
@@ -382,17 +903,20 @@
         function startFireworks() {
             if (running) return;
             running = true;
+            scheduleActive = false;
             startAt = Date.now();
 
-            // UI changes
             ui.classList.add("hidden");
             banner.textContent = "煙火進行中（30 秒後自動跳轉）";
             hny.classList.add("show");
 
-            // seed a few rockets instantly
-            for (let i = 0; i < 6; i++) spawnRocket();
-            // initialize background once
+            nextBtn.classList.add("show");
+
+            const seed = lowPowerMode ? 5 : 8;
+            for (let i = 0; i < seed; i++) spawnRocket();
+
             ctx.globalAlpha = 1;
+            ctx.globalCompositeOperation = "source-over";
             ctx.fillStyle = "rgba(0,0,0,1)";
             ctx.fillRect(0, 0, W, H);
 
@@ -426,28 +950,23 @@
         }
 
         function loop() {
-            const now = new Date();
-            const nowMs = now.getTime();
-            const targetMs = TARGET.getTime();
-            const diff = targetMs - nowMs;
+            if (!scheduleActive) return;
 
-            // Banner clock
+            const now = new Date();
+            const diff = TARGET.getTime() - now.getTime();
+
             banner.textContent = `裝置時間：${fmt(now)} ｜目標：${fmt(TARGET)}`;
 
             if (diff > COUNTDOWN_WINDOW_MS) {
-                // Too early -> waiting mode (show remaining)
                 showWaiting(diff);
             } else if (diff > 0) {
-                // In last 10 seconds -> countdown
                 const secLeft = Math.ceil(diff / 1000);
                 showCountdown(secLeft);
             } else {
-                // diff <= 0 => reached/past target
-                // "瞬間才能執行"：只允許在很短容忍範圍內啟動（避免頁面延遲）
-                const toleranceMs = 1200; // 1.2s window to account for timer drift
+                const toleranceMs = lowPowerMode ? 2500 : 1400;
                 if (Math.abs(diff) <= toleranceMs) {
                     startFireworks();
-                    return; // stop loop after start
+                    return;
                 } else {
                     showMissed();
                 }
@@ -455,14 +974,33 @@
 
             requestAnimationFrame(loop);
         }
+
+        // visibility pause/resume (mobile friendliness)
+        document.addEventListener("visibilitychange", () => {
+            if (!running) return;
+            if (document.hidden) {
+                cancelAnimationFrame(rafId);
+            } else {
+                rafId = requestAnimationFrame(tick);
+            }
+        });
+
+        /**********************
+         * Desktop Test Button
+         **********************/
+        testBtn.addEventListener("click", () => {
+            if (running) return;
+            TARGET = new Date(Date.now() + 10_000);
+            banner.textContent = `測試模式：10 秒後啟動煙火 ｜裝置時間：${fmt(new Date())}`;
+            console.log("testBtn clicked, target set to:", TARGET);
+        });
+
         window.TEST_FIREWORK = () => {
             console.log("🧪 手動測試煙火");
-            startCountdown(10);
-            setTimeout(startFireworks, 10000);
+            startFireworks();
         };
+
         loop();
-
-
     </script>
 </body>
 
