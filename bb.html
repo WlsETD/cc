@@ -51,9 +51,9 @@
         /* 移動距離自行調整 */
     }
      #btn2.s2 {
-        transform: translateY(-100px);
+        transform: translate(-200px,-400px);
         /* 移動距離自行調整 */
-        scale: 0.5;
+        scale: 1;
      }
 
 
@@ -75,6 +75,11 @@
         transition: 0.3s;
      
     }
+    #btn1.big2 {
+        font-size: 70px;
+        transition: 0.3s;
+     
+    }
 </style>
 <script>
     const btn1 = document.getElementById("btn1");
@@ -91,7 +96,7 @@
         else if (step === 1) {
             // 第二次：2 消失、1 變大
             btn2.classList.add("s2");
-            
+            btn1.classList.add("big2");
             step = 2;
         } else if (step === 2) {
             // 第二次：2 消失、1 變大
@@ -101,6 +106,7 @@
         }
     });
     btn1.addEventListener("click", () => {
+        btn1.classList.remove("big");
         btn1.innerText = "我就知道寶寶最好了";
         btn2.classList.add("hidden");
     });
